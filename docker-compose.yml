@@ -6,7 +6,7 @@ services:
     container_name: bluesky_webhook_forwarder
     restart: unless-stopped
     env_file:
-      - .env
+      - stack.env
     volumes:
       - bluesky_cache:/app/cache
     healthcheck:
