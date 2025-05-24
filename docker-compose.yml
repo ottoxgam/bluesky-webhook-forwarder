@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  bluesky-webhook-forwarder:
+    build: .
+    container_name: bluesky_webhook_forwarder
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - bluesky_cache:/app/cache
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json; json.load(open('/app/cache/posted_cache.json'))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  bluesky_cache:
