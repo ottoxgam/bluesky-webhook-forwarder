@@ -5,6 +5,6 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY bluesky_comments_and_posts_to_discord.py .
+COPY bluesky-webook-forwarder.py .
 
 CMD ["python", "bluesky-webook-forwarder.py"]
