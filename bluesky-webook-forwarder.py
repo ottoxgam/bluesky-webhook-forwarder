@@ -78,6 +78,42 @@ async def poll_profiles():
             try:
                 feed = client.app.bsky.feed.get_author_feed({'actor': handle, 'limit': 10})
                 for item in feed.feed:
+
+                    # 🔁 Repost Handling
+                    if hasattr(item, 'reason') and getattr(item.reason, '$type', '') == 'app.bsky.feed.defs#reasonRepost':
+                        repost_uri = item.reason.uri
+                        repost_post = item.reason
+                        repost_text = getattr(repost_post.record, 'text', '[No Text]')
+                        original_post_id = repost_uri.split('/')[-1]
+                        original_did = repost_uri.split('/')[2]
+
+                        if repost_uri in posted_cache:
+                            continue
+
+                        # Resolve original handle from DID
+                        if original_did in did_cache:
+                            original_handle = did_cache[original_did]
+                        else:
+                            try:
+                                original_profile = client.app.bsky.actor.get_profile({'actor': original_did})
+                                original_handle = original_profile.handle
+                                did_cache[original_did] = original_handle
+                            except Exception as e:
+                                logging.warning(f"Failed to resolve handle for repost DID {original_did}: {e}")
+                                original_handle = original_did
+
+                        original_link = f"https://bsky.app/profile/{original_handle}/post/{original_post_id}"
+                        repost_message = (
+                            f"🔁 **{handle} reposted a post by {original_handle}**\n"
+                            f"{repost_text}\n"
+                            f"🔗 {original_link}"
+                        )
+                        send_to_discord(repost_message)
+                        posted_cache.add(repost_uri)
+                        logging.debug(f"Reported repost by {handle}")
+                        continue  # Skip further processing for this item
+
+                    # 📣 Original Post or Comment
                     post = item.post
                     uri = post.uri
                     if uri in posted_cache:
